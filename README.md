@@ -1,6 +1,6 @@
 # InfoSec Beginner Projects - Learning Path for Cybersecurity
 
-A collection of 5 beginner-friendly infosec projects designed to teach fundamental security concepts while building a portfolio for job applications.
+A collection of 6 beginner-friendly infosec projects designed to teach fundamental security and networking concepts while building a portfolio for job applications.
 
 ## 📚 Projects Overview
 
@@ -55,6 +55,16 @@ pip install cryptography
 python password_manager.py
 ```
 
+### Project 6: IP Subnet Calculator
+Learn IP addressing, subnetting, and network calculations with visual breakdown.
+- **Skills**: IP addressing, CIDR notation, binary math, network fundamentals
+- **Time**: 1 hour
+- **Difficulty**: Medium
+```bash
+cd 6-ip-subnet-calculator
+python ip_calculator.py
+```
+
 ## 🎯 Learning Path
 
 ### Week 1: Foundations
@@ -80,6 +90,12 @@ python password_manager.py
   - Integrate encryption knowledge
   - Build practical security application
   - Understand real-world security patterns
+
+### Week 3: Networking & Continuation
+- **Day 11-12**: Project 6 - IP Subnet Calculator
+  - Understand IP addressing fundamentals
+  - Learn subnetting and CIDR notation
+  - Practice network calculations
 
 ## 💻 Installation & Setup
 
