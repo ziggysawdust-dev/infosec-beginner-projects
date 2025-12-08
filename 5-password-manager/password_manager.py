@@ -51,7 +51,7 @@ class PasswordManager:
         if salt is None:
             salt = os.urandom(16)
         
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
@@ -103,19 +103,34 @@ class PasswordManager:
             with open(self.vault_file, 'r') as f:
                 vault_data = json.load(f)
             
+            # Retrieve the stored salt
+            if 'salt' not in vault_data:
+                print("❌ Vault file is corrupted (missing salt)!")
+                return False
+            
             salt = base64.b64decode(vault_data['salt'])
             key, _ = self._derive_key(master_password, salt)
-            self.cipher = Fernet(key)
-            self.master_password = master_password
             
-            # Test key by trying to decrypt
-            for encrypted in vault_data['passwords'].values():
+            # Try to create cipher - if key is wrong, this will fail on decrypt
+            try:
+                test_cipher = Fernet(key)
+            except Exception:
+                print("❌ Incorrect master password!")
+                return False
+            
+            # If there are passwords, test decryption with one of them
+            if vault_data['passwords']:
+                # Get first password entry to test
+                first_password_entry = list(vault_data['passwords'].values())[0]
                 try:
-                    self.cipher.decrypt(encrypted.encode())
-                    break
-                except:
+                    test_cipher.decrypt(first_password_entry['password'].encode())
+                except Exception:
                     print("❌ Incorrect master password!")
                     return False
+            
+            # Key is valid, set as active cipher
+            self.cipher = test_cipher
+            self.master_password = master_password
             
             print("✅ Vault opened successfully!")
             return True
@@ -157,33 +172,21 @@ class PasswordManager:
     
     def get_password(self, service: str) -> dict:
         """
-        Retrieve password from vault.
+        Retrieve password from vault (CLI-friendly version).
         
         Args:
             service: Service name
             
         Returns:
-            Dictionary with username and password
+            Dictionary with username and password, or None if not found
         """
-        if not self.cipher:
-            print("❌ Vault not open!")
+        result = self.get_password_details(service)
+        
+        if not result['success']:
+            print(f"❌ {result['error']}")
             return None
         
-        with open(self.vault_file, 'r') as f:
-            vault_data = json.load(f)
-        
-        if service not in vault_data['passwords']:
-            print(f"❌ No password found for {service}")
-            return None
-        
-        entry = vault_data['passwords'][service]
-        decrypted = self.cipher.decrypt(entry['password'].encode()).decode()
-        
-        return {
-            'service': service,
-            'username': entry['username'],
-            'password': decrypted
-        }
+        return result
     
     def list_services(self) -> list:
         """List all stored services."""
@@ -195,6 +198,66 @@ class PasswordManager:
             vault_data = json.load(f)
         
         return list(vault_data['passwords'].keys())
+    
+    def search_services(self, prefix: str) -> list:
+        """
+        Search for services by prefix (case-insensitive).
+        
+        Perfect for GUI implementation - returns data without printing.
+        
+        Args:
+            prefix: Search prefix (e.g., "gm" finds "gmail", "gmx")
+            
+        Returns:
+            List of matching service names, empty if none found
+        """
+        if not self.cipher:
+            return []
+        
+        with open(self.vault_file, 'r') as f:
+            vault_data = json.load(f)
+        
+        services = vault_data['passwords'].keys()
+        prefix_lower = prefix.lower()
+        
+        # Filter services by prefix (case-insensitive)
+        matches = [svc for svc in services if svc.lower().startswith(prefix_lower)]
+        
+        return sorted(matches)  # Return sorted for consistent results
+    
+    def get_password_details(self, service: str) -> dict:
+        """
+        Get password details without printing.
+        
+        Designed for GUI - returns data structure instead of printing.
+        
+        Args:
+            service: Service name
+            
+        Returns:
+            Dict with success status and data, or error message
+        """
+        if not self.cipher:
+            return {'success': False, 'error': 'Vault not open'}
+        
+        with open(self.vault_file, 'r') as f:
+            vault_data = json.load(f)
+        
+        if service not in vault_data['passwords']:
+            return {'success': False, 'error': f'No password found for {service}'}
+        
+        try:
+            entry = vault_data['passwords'][service]
+            decrypted = self.cipher.decrypt(entry['password'].encode()).decode()
+            
+            return {
+                'success': True,
+                'service': service,
+                'username': entry['username'],
+                'password': decrypted
+            }
+        except Exception as e:
+            return {'success': False, 'error': f'Decryption error: {str(e)}'}
     
     def delete_password(self, service: str) -> bool:
         """Delete a password entry."""
@@ -264,12 +327,13 @@ def main():
         print("Options:")
         print("1. Add new password")
         print("2. Retrieve password")
-        print("3. List all services")
-        print("4. Delete password")
-        print("5. Generate strong password")
-        print("6. Exit")
+        print("3. Search services")
+        print("4. List all services")
+        print("5. Delete password")
+        print("6. Generate strong password")
+        print("7. Exit")
         
-        choice = input("\nChoose option (1-6): ").strip()
+        choice = input("\nChoose option (1-7): ").strip()
         
         if choice == '1':
             service = input("Service/Website name: ")
@@ -291,6 +355,32 @@ def main():
                 print(f"Password: {entry['password']}")
         
         elif choice == '3':
+            prefix = input("Search services (type prefix, e.g., 'g' for gmail, github): ")
+            results = manager.search_services(prefix)
+            
+            if results:
+                print(f"\n🔍 Found {len(results)} match(es):")
+                for i, service in enumerate(results, 1):
+                    print(f"  {i}. {service}")
+                
+                # Allow user to select one
+                try:
+                    choice_num = input("\nSelect a service (number) or press Enter to cancel: ").strip()
+                    if choice_num and choice_num.isdigit():
+                        idx = int(choice_num) - 1
+                        if 0 <= idx < len(results):
+                            selected_service = results[idx]
+                            entry = manager.get_password(selected_service)
+                            if entry:
+                                print(f"\n📋 {entry['service']}")
+                                print(f"Username: {entry['username']}")
+                                print(f"Password: {entry['password']}")
+                except ValueError:
+                    print("Invalid selection")
+            else:
+                print(f"❌ No services found starting with '{prefix}'")
+        
+        elif choice == '4':
             services = manager.list_services()
             if services:
                 print("\n📋 Stored Services:")
@@ -299,16 +389,16 @@ def main():
             else:
                 print("No passwords stored yet.")
         
-        elif choice == '4':
+        elif choice == '5':
             service = input("Service to delete: ")
             manager.delete_password(service)
         
-        elif choice == '5':
+        elif choice == '6':
             length = int(input("Password length (default 16): ") or "16")
             pwd = PasswordManager.generate_password(length)
             print(f"Generated: {pwd}")
         
-        elif choice == '6':
+        elif choice == '7':
             print("\n✅ Goodbye!")
             break
         
