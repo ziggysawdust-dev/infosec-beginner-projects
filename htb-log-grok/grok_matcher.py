@@ -36,55 +36,55 @@ class GrokPatterns:
     """Pre-defined grok patterns for common log formats."""
     
     # Time patterns
-    TIMESTAMP_ISO8601 = r'(?<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)'
-    TIMESTAMP_SYSLOG = r'(?<timestamp>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})'
-    TIMESTAMP_UNIX = r'(?<timestamp>\d{10})'
+    TIMESTAMP_ISO8601 = r'(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?)'
+    TIMESTAMP_SYSLOG = r'(?P<timestamp>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})'
+    TIMESTAMP_UNIX = r'(?P<timestamp>\d{10})'
     
     # Network patterns
-    IP_ADDRESS = r'(?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-    HOSTNAME = r'(?<hostname>[\w\-\.]+)'
-    PORT = r'(?<port>\d{1,5})'
+    IP_ADDRESS = r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+    HOSTNAME = r'(?P<hostname>[\w\-\.]+)'
+    PORT = r'(?P<port>\d{1,5})'
     
     # Auth patterns
-    USER = r'(?<user>[\w\-\.]+)'
-    PASSWORD = r'(?<password>[\S]+)'
+    USER = r'(?P<user>[\w\-\.]+)'
+    PASSWORD = r'(?P<password>[\S]+)'
     
     # HTTP patterns
-    HTTP_METHOD = r'(?<http_method>GET|POST|PUT|DELETE|HEAD|PATCH|OPTIONS)'
-    HTTP_STATUS = r'(?<http_status>\d{3})'
-    URL_PATH = r'(?<url_path>/[\S]*)'
+    HTTP_METHOD = r'(?P<http_method>GET|POST|PUT|DELETE|HEAD|PATCH|OPTIONS)'
+    HTTP_STATUS = r'(?P<http_status>\d{3})'
+    URL_PATH = r'(?P<url_path>/[\S]*)'
     
     # Custom patterns
-    TTY = r'(?<tty>tty\d+|pts/\d+|console|unknown)'
+    TTY = r'(?P<tty>tty\d+|pts/\d+|console|unknown)'
     
     # Pre-built common patterns
     SYSLOG_AUTH_SUCCESS = (
-        r'(?<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
-        r'(?<hostname>[\w\-\.]+)\s+'
-        r'sshd\[(?<pid>\d+)\]:\s+'
-        r'Accepted (?<auth_type>\w+) for (?<user>\w+) from (?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) port (?<port>\d+)'
+        r'(?P<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
+        r'(?P<hostname>[\w\-\.]+)\s+'
+        r'sshd\[(?P<pid>\d+)\]:\s+'
+        r'Accepted (?P<auth_type>\w+) for (?P<user>\w+) from (?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) port (?P<port>\d+)'
     )
     
     SYSLOG_AUTH_FAILED = (
-        r'(?<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
-        r'(?<hostname>[\w\-\.]+)\s+'
-        r'sshd\[(?<pid>\d+)\]:\s+'
-        r'Invalid user (?<user>\w+) from (?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) port (?<port>\d+)'
+        r'(?P<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
+        r'(?P<hostname>[\w\-\.]+)\s+'
+        r'sshd\[(?P<pid>\d+)\]:\s+'
+        r'Invalid user (?P<user>\w+) from (?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) port (?P<port>\d+)'
     )
     
     SUDO_COMMAND = (
-        r'(?<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
-        r'(?<hostname>[\w\-\.]+)\s+'
-        r'sudo:\s+(?<user>\w+)\s+:\s+TTY=(?<tty>[\w/\-]+)\s+;\s+PWD=(?<pwd>[^\s]+)\s+;\s+'
-        r'USER=(?<target_user>\w+)\s+;\s+COMMAND=(?<command>.+)$'
+        r'(?P<timestamp>\w+\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+'
+        r'(?P<hostname>[\w\-\.]+)\s+'
+        r'sudo:\s+(?P<user>\w+)\s+:\s+TTY=(?P<tty>[\w/\-]+)\s+;\s+PWD=(?P<pwd>[^\s]+)\s+;\s+'
+        r'USER=(?P<target_user>\w+)\s+;\s+COMMAND=(?P<command>.+)$'
     )
     
     APACHE_ACCESS = (
-        r'(?<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+'
-        r'(?<ident>\S+)\s+(?<user>\S+)\s+'
-        r'\[(?<timestamp>[^\]]+)\]\s+'
-        r'"(?<method>\w+)\s+(?<url_path>\S+)\s+(?<http_version>HTTP/[\d\.]+)"\s+'
-        r'(?<http_status>\d{3})\s+(?<bytes>\d+)'
+        r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+'
+        r'(?P<ident>\S+)\s+(?P<user>\S+)\s+'
+        r'\[(?P<timestamp>[^\]]+)\]\s+'
+        r'"(?P<method>\w+)\s+(?P<url_path>\S+)\s+(?P<http_version>HTTP/[\d\.]+)"\s+'
+        r'(?P<http_status>\d{3})\s+(?P<bytes>\d+)'
     )
     
     @classmethod
