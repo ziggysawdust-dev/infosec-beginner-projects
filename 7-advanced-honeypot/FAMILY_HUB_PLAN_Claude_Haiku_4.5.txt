@@ -1,0 +1,150 @@
+Family Hub Project Plan — Claude Haiku 4.5 • 1x
+
+Nice — plan created and task 1 is in-progress.
+
+Is a family-hub a good long-term project?
+- Short answer: Yes — it's an excellent long-term project. It touches hardware, embedded Linux, networking, UI/UX, integrations (calendars, IoT), automation, privacy/security, and optional ML (vision/voice). That makes it great for learning, creating portfolio work, and demonstrating full-stack skills to employers.
+- Why it's valuable:
+  - Teaches end-to-end system design (HW + SW + cloud).
+  - Offers many incremental milestones (quick wins early, deeper features later).
+  - Highly customizable for privacy-first approaches (offline voice, local data).
+  - Useable daily — keeps motivation high and yields real user feedback.
+  - Resume/portfolio friendly: you can show architecture diagrams, code repos, deployment logs, and threat/UX analysis.
+
+Recommended hardware options (by budget & use-case)
+- Beginner / lowest-friction (best for first prototype)
+  - Raspberry Pi 4 Model B (4GB or 8GB): cheap, lots of docs, community support. Good for MagicMirror² + Home Assistant + Node-RED.
+  - Display: Official Raspberry Pi 7" Touchscreen (7") OR an inexpensive 10.1" HDMI IPS touch display (~$60–$120). Use HDMI + USB for touch.
+  - Audio: USB speaker or inexpensive 2.0 USB speaker. For mic: ReSpeaker 4-Mic HAT or a cheap USB conference mic.
+  - Camera: Raspberry Pi Camera Module v2 or HQ camera (optional).
+  - Extras: MicroSD (32–128GB, A1/UHS), aluminium case, power supply (5V/3A), optional PoE HAT if you want PoE.
+  - Estimated cost (prototype): $150–$300.
+
+- Privacy/Low-power alternative (info-only / family notices)
+  - ESP32-S3 or ESP32-S3-based dev board with small TFT or e-ink display for scheduling/notes (no heavy UI or voice).
+  - Good for battery-backed displays (fridge magnet).
+  - Estimated cost: $20–$80.
+
+- Mid-range / robust (local ML, multiple tasks)
+  - Raspberry Pi 5 (if available) or Pi 4 with Coral USB Accelerator (Edge TPU) for lightweight ML inference (face recognition, keyword spotting).
+  - Better speakers, better microphone array (ReSpeaker Core or USB microphone).
+  - Zigbee USB stick (ConBee II or Sonoff Zigbee 3.0) or Z-Wave stick (Aeotec) to integrate sensors.
+  - UPS HAT (battery backup) if you want always-on.
+  - Estimated cost: $300–$600.
+
+- High-end / ML & vision (for advanced CV/voice)
+  - NVIDIA Jetson (Nano or Xavier NX) — for robust on-device vision, face recognition, real-time video tasks.
+  - Intel NUC or small x86 mini-PC — if you need speed, Docker support and heavier services.
+  - Better camera (IMX219/IMX477 or USB webcams), I2S amplifier + decent speakers.
+  - Estimated cost: $400–$1,200.
+
+Hardware components checklist (concrete)
+- Compute: Raspberry Pi 4 (4GB/8GB) or Intel NUC / Jetson Nano
+- Display: 7" official Pi touchscreen OR 10.1"/13.3" IPS HDMI touch display
+- Touch interface: USB touch controller (most displays use USB)
+- Microphone: ReSpeaker 4-Mic HAT or USB mic (for simplicity)
+- Speaker: USB speaker or I2S amp + passive speaker (MAX98357A + speaker)
+- Camera (optional): Raspberry Pi Camera Module v2 / HQ
+- Zigbee/Z-Wave: ConBee II (Zigbee) or Aeotec Z-Stick Gen5 (Z-Wave)
+- Power: Official Pi power supply or PoE HAT; UPS HAT optional
+- Storage: microSD (class A1/A2) or SSD (if using NUC)
+- Case/wall mount: custom 3D printed or off-the-shelf display case
+- Networking: Ethernet recommended for reliability; Wi‑Fi acceptable
+- Misc: RTC HAT (if offline), GPIO sensors (DHT22/temp), reed sensor for doorbell, relay for door locked control (be careful w/ mains).
+
+Software stack recommendations
+- Frontend UI / Dashboard:
+  - MagicMirror² (Electron-based) — excellent for info displays (calendar, notes, weather, news). Very modular.
+  - Home Assistant Lovelace dashboard — great if you want tight smart-home control and sensors.
+  - Custom web app (React/Vue) served locally for more control.
+- Automation & messaging:
+  - Home Assistant (supervised or Home Assistant OS) + Node-RED for automation flows.
+  - MQTT (Mosquitto) as the message backbone for internal communications.
+- Voice (privacy-first):
+  - Offline STT/voice assistant: Rhasspy or VOSK for offline speech-to-text.
+  - Offline TTS: Coqui TTS or local TTS engines.
+  - Mycroft is an open-source assistant but consider privacy and maintenance.
+  - If you want cloud-level accuracy later: Google Assistant SDK, Amazon Alexa (requires cloud).
+- Vision / Face recognition (optional):
+  - OpenCV + face_recognition (dlib) or lightweight models on Coral/Jetson.
+  - Use for presence detection (not persistent storage without consent).
+- Data & persistence:
+  - SQLite for local storage (notes, reminders).
+  - Optionally sync to cloud (encrypted): Nextcloud, or export via encrypted backups.
+- DevOps:
+  - Docker: run services as containers (makes upgrades easier).
+  - Git for code/config management.
+- Integration examples:
+  - Calendar: Google Calendar (or CalDAV / Nextcloud) for family events.
+  - Grocery list: shared app (Home Assistant input_text + automation) or custom UI.
+  - Intercom: WebRTC or simple push-to-talk via MQTT.
+  - Doorbell: integrate with smart doorbell via webhooks.
+- Security best practices:
+  - Isolate hub on its own VLAN or separate Wi‑Fi SSID.
+  - Keep system up to date; use SSH keys, not passwords.
+  - Use least privilege for integrations (OAuth tokens, limited scopes).
+  - Protect voice/camera data: local only by default; opt-in cloud features.
+  - Encrypt backups and keep a secure off-site copy.
+
+Prototype roadmap (phased, with milestones)
+- Phase 0 — Define requirements (1–2 days)
+  - What core features matter? e.g., shared calendar, grocery list, notes, intercom, weather, timers, music.
+  - Decide privacy stance: fully local vs cloud-synced.
+- Phase 1 — Minimal viable hub (1–2 weeks)
+  - Hardware: Raspberry Pi 4 + 7" touchscreen or HDMI display.
+  - Software: Install MagicMirror² or Home Assistant, display calendar and notes.
+  - Connect one service (Google Calendar or CalDAV).
+  - Version-control config.
+- Phase 2 — Automation & integrations (2–4 weeks)
+  - Add MQTT + Node-RED and one sensor (temperature) or Zigbee stick + a smart bulb.
+  - Add grocery list syncing and basic automations.
+- Phase 3 — Voice & intercom (2–6 weeks)
+  - Add offline voice (Rhasspy/VOSK), local TTS.
+  - Implement simple intercom (push-to-talk via MQTT/Websocket).
+- Phase 4 — Advanced features & ML (optional, ongoing)
+  - Add camera-based presence (face recognition) or object detection.
+  - Add user accounts, per-user greetings.
+  - Add remote backup, analytics, and robust testing.
+- Ongoing — maintenance & iteration
+  - Monthly updates, security audits, and UX tweaks.
+
+Estimated budgets (ballpark)
+- Basic prototype (Pi + small screen + audio): $150–$300
+- Mid-range (better screen + Zigbee + UPS): $300–$600
+- High-end (Jetson/NUC + ML + high-quality audio + camera): $600–$1,500+
+
+Why this is great long-term for you (career & learning)
+- Demonstrates end-to-end engineering: hardware selection, embedded software, cloud sync, automation, security.
+- Plenty of shareable artifacts: Git repos, diagrams, blog posts, demo videos.
+- Teaches common industry tools (Docker, MQTT, Home Assistant, Node-RED).
+- Teaches privacy-aware design decisions — good interview talking points.
+- You can scale complexity slowly; early demos are easy and useful.
+
+Risks & maintenance considerations
+- Ongoing maintenance: updates, credential rotations, hardware failures.
+- Privacy pitfalls: voice/camera/cloud features can leak data; plan default-local behavior.
+- Security exposure if placed on public networks — keep it inside home VLAN.
+- Hardware compatibility and driver issues (touchscreens and camera modules sometimes need fiddling).
+
+Concrete starter shopping list (beginner-friendly)
+- Raspberry Pi 4 Model B — 4GB (or 8GB if you plan Docker) — ~$35–$75
+- Official Pi 7" Touchscreen OR 10.1" HDMI touch display — $60–$130
+- Official 5V 3A USB-C power supply — $10–$15
+- MicroSD 32–128GB A1/A2 (or SSD via USB if using NUC) — $8–$30
+- ReSpeaker 4-Mic HAT or cheap USB mic — $20–$60
+- USB speaker — $15–$40
+- ConBee II (Zigbee) USB stick — $40–$50 (optional)
+- Case + wall-mount (or 3D printed) — $10–$50
+- UPS HAT (optional) — $30–$80
+
+Next steps I can do for you (pick one)
+- Help you prioritize features (privacy first vs voice-first).
+- Produce a shopping list with links and exact SKUs within your budget.
+- Provision a step-by-step install guide for Phase 1 (Raspberry Pi + MagicMirror²).
+- Scaffold a Git repo with initial configs (MagicMirror modules, Home Assistant YAML templates, Node-RED flows).
+- Design a minimal UI mockup (what the home screen should show).
+
+Which of the next steps would you like me to take? Also tell me:
+- Your target budget (rough range).
+- Which features matter most (calendar, grocery, voice, intercom, camera, smart-home control).
+- Whether privacy (local-only) is a priority.

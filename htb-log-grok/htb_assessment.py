@@ -29,14 +29,19 @@ from grok_matcher import LogParser, GrokPatterns
 class LogAssessmentTool:
     """Unified log assessment and analysis tool for HackTheBox."""
     
-    def __init__(self):
-        """Initialize assessment tool."""
+    def __init__(self, skip_db: bool = True):
+        """Initialize assessment tool.
+        
+        Args:
+            skip_db: If True, don't create/use SQLite database (safer for HTB files)
+        """
         self.log_parser = LogParser()
         self.grok_matches: List = []
         self.wtmp_sessions: List = []
         self.timeline: List[Dict] = []
         self.events_by_type: Dict = defaultdict(list)
         self.suspicious_events: List = []
+        self.skip_db = skip_db
     
     def load_wtmp(self, wtmp_file: str) -> bool:
         """Load and parse wtmp file."""

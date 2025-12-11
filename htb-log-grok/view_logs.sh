@@ -100,16 +100,41 @@ view_wtmp() {
     print_header "LOGIN/LOGOUT HISTORY (from $wtmp_file)"
     
     if check_file "$wtmp_file"; then
-        # Use last command to show login history from specific file
-        last -f "$wtmp_file" | head -50 | while read -r line; do
-            if [[ "$line" =~ "still logged in" ]]; then
-                echo -e "${GREEN}$line${RESET}"
-            elif [[ "$line" =~ "shutdown" ]] || [[ "$line" =~ "reboot" ]]; then
-                echo -e "${YELLOW}$line${RESET}"
-            else
-                echo "$line"
-            fi
-        done
+        # Use Python to parse binary wtmp files
+        python3 << PYTHON_EOF
+import sys
+sys.path.insert(0, '$(dirname "$0")')
+from wtmp_parser import WtmpParser
+
+try:
+    parser = WtmpParser('$wtmp_file')
+    entries = parser.parse()
+    
+    if not entries:
+        print("No login records found.")
+    else:
+        # Print header
+        print(f"{'TIMESTAMP':<20} {'USER':<12} {'TYPE':<15} {'HOST':<20} {'IP':<15}")
+        print("─" * 82)
+        
+        for entry in entries:
+            # Handle None timestamps
+            timestamp = entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') if entry.timestamp else '(invalid)'
+            user = entry.user or '(none)'
+            entry_type = entry.type_name
+            host = entry.host or entry.id or '?'
+            ip = entry.ip_str or '(local)'
+            
+            # Skip invalid entries
+            if timestamp == '(invalid)':
+                continue
+                
+            print(f"{timestamp:<20} {user:<12} {entry_type:<15} {host:<20} {ip:<15}")
+            
+except Exception as e:
+    print(f"Error parsing wtmp: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON_EOF
     fi
 }
 

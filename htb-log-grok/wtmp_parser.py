@@ -91,6 +91,16 @@ class UtmpEntry:
         except (TypeError, ValueError):
             return '0.0.0.0'
     
+    @property
+    def type_name(self) -> str:
+        """Get type name for this entry."""
+        return self.TYPE_NAMES.get(self.type, 'UNKNOWN')
+    
+    @property
+    def ip_str(self) -> str:
+        """Get IP address as string."""
+        return self.ipaddr
+    
     def to_dict(self) -> Dict:
         """Convert entry to dictionary."""
         return {
