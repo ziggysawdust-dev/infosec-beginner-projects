@@ -15,14 +15,14 @@ RESET='\033[0m'
 show_help() {
     echo "Human-readable log viewer"
     echo ""
-    echo "Usage: ./view_logs.sh [command] [options]"
+    echo "Usage: ./view_logs.sh [command] [options] [--wtmp /path/to/wtmp]"
     echo ""
     echo "Commands:"
     echo "  auth              View SSH/auth logs (last 50 lines)"
     echo "  auth [N]          View last N lines of auth logs"
     echo "  syslog            View system logs (last 50 lines)"
     echo "  syslog [N]        View last N lines of syslog"
-    echo "  wtmp              View login/logout history"
+    echo "  wtmp              View login/logout history from /var/log/wtmp"
     echo "  sudo              View sudo command execution"
     echo "  apache            View Apache web server logs"
     echo "  fail              View failed login attempts"
@@ -30,11 +30,15 @@ show_help() {
     echo "  user [USERNAME]   View logs for specific user"
     echo "  ip [IP]           View logs from specific IP"
     echo ""
+    echo "Global Options:"
+    echo "  --wtmp /path      Point to custom wtmp file location"
+    echo ""
     echo "Examples:"
-    echo "  ./view_logs.sh auth           # Last 50 auth log lines"
-    echo "  ./view_logs.sh auth 100       # Last 100 auth log lines"
-    echo "  ./view_logs.sh user root      # All logs for user 'root'"
-    echo "  ./view_logs.sh ip 192.168     # Logs from IPs starting with 192.168"
+    echo "  ./view_logs.sh auth                      # Last 50 auth log lines"
+    echo "  ./view_logs.sh auth 100                  # Last 100 auth log lines"
+    echo "  ./view_logs.sh user root                 # All logs for user 'root'"
+    echo "  ./view_logs.sh ip 192.168                # Logs from IPs starting with 192.168"
+    echo "  ./view_logs.sh wtmp --wtmp ./htb-wtmp   # Custom wtmp file in current directory"
     echo ""
 }
 
@@ -92,11 +96,12 @@ view_syslog() {
 }
 
 view_wtmp() {
-    print_header "LOGIN/LOGOUT HISTORY (from wtmp)"
+    local wtmp_file="${CUSTOM_WTMP:-/var/log/wtmp}"
+    print_header "LOGIN/LOGOUT HISTORY (from $wtmp_file)"
     
-    if check_file "/var/log/wtmp"; then
-        # Use last command to show login history
-        last | head -50 | while read -r line; do
+    if check_file "$wtmp_file"; then
+        # Use last command to show login history from specific file
+        last -f "$wtmp_file" | head -50 | while read -r line; do
             if [[ "$line" =~ "still logged in" ]]; then
                 echo -e "${GREEN}$line${RESET}"
             elif [[ "$line" =~ "shutdown" ]] || [[ "$line" =~ "reboot" ]]; then
@@ -200,6 +205,20 @@ if [[ $# -eq 0 ]]; then
     show_help
     exit 0
 fi
+
+# Parse global options first
+CUSTOM_WTMP=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --wtmp)
+            CUSTOM_WTMP="$2"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 case "$1" in
     auth)
