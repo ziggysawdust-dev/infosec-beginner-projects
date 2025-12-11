@@ -28,29 +28,54 @@ cd htb-log-grok
 
 ## Usage
 
-### Parse wtmp file
+### Quick View (Human-Readable Format)
+
+View logs in a clean, color-coded table with filtering and export options:
+
 ```bash
-python3 wtmp_parser.py /var/log/wtmp
+# View wtmp login records
+python3 log_viewer.py wtmp /var/log/wtmp
+
+# View SSH authentication logs
+python3 log_viewer.py log /var/log/auth.log --pattern syslog_auth_success
+
+# Filter by username
+python3 log_viewer.py log /var/log/auth.log --user root
+
+# Filter by IP address
+python3 log_viewer.py log /var/log/auth.log --ip 192.168
+
+# Export to JSON for further analysis
+python3 log_viewer.py log /var/log/auth.log --export-json report.json
+
+# Export to CSV for spreadsheet apps
+python3 log_viewer.py wtmp /var/log/wtmp --export-csv logins.csv
+
+# Combine filters
+python3 log_viewer.py log /var/log/auth.log --user root --ip 10.10 --export-json admin_logins.json
 ```
 
-### Parse text logs with grok
+### Programmatic Access
+
 ```bash
+# Parse wtmp file directly
+python3 wtmp_parser.py /var/log/wtmp
+
+# Parse text logs with grok patterns
 python3 grok_matcher.py /var/log/auth.log syslog_auth_success
 python3 grok_matcher.py /var/log/apache2/access.log apache_access
 ```
 
-### Full assessment (wtmp + multiple logs)
+### Full Assessment Report
+
 ```bash
+# Comprehensive analysis (wtmp + multiple logs + threat detection)
 python3 htb_assessment.py report /var/log/wtmp /var/log/auth.log /var/log/syslog
-```
 
-### Analyze just wtmp
-```bash
+# Analyze just wtmp sessions
 python3 htb_assessment.py analyze_wtmp /var/log/wtmp
-```
 
-### Analyze just log file
-```bash
+# Analyze just log file with pattern matching
 python3 htb_assessment.py analyze_log /var/log/auth.log syslog_auth_failed
 ```
 
@@ -96,6 +121,63 @@ HACKTHEBOX LOG ASSESSMENT REPORT
     command: cat /root/.ssh/id_rsa
     timestamp: Dec  8 16:45:23
 ```
+
+## Supported Patterns
+
+### wtmp Parser
+- `USER_PROCESS`: Login/logout events
+- `BOOT_TIME`: System reboot events
+- `DEAD_PROCESS`: Terminated sessions
+- IP address extraction and session reconstruction
+
+### Grok Patterns
+- `syslog_auth_success`: SSH successful authentication
+- `syslog_auth_failed`: SSH failed authentication attempts
+- `sudo_command`: Privilege escalation (sudo) commands
+- `apache_access`: Web server access logs
+
+## The Tools
+
+### log_viewer.py
+**Human-readable log viewer with color-coding, filtering, and export.**
+
+Features:
+- Color-coded output (green=success, red=failed, yellow=warning)
+- Formatted table view with key fields
+- Filtering by user, IP, status, or time
+- Export to JSON or CSV
+- Summary statistics and top users/IPs
+
+The best tool to quickly view and understand logs.
+
+### wtmp_parser.py
+**Binary wtmp file parser.**
+
+- Parses Unix login/logout event logs (296 bytes per entry)
+- Handles type codes (USER_PROCESS, BOOT_TIME, etc.)
+- Extracts IP addresses and hostnames
+- Session duration calculation
+- Methods: `parse()`, `get_login_sessions()`, `get_reboot_times()`, `get_summary()`
+
+### grok_matcher.py
+**Grok-like pattern matcher for text logs.**
+
+- Pre-defined patterns for common log formats
+- Regex-based field extraction with named groups
+- Pattern registration system
+- Supports custom patterns
+- Methods: `match()`, `register_pattern()`
+
+### htb_assessment.py
+**Comprehensive forensics analysis tool.**
+
+Combines wtmp + logs with threat detection:
+- Timeline correlation across multiple sources
+- Brute force detection (3+ failed logins)
+- Multi-source login anomaly detection
+- Privilege escalation identification
+- Incomplete session detection
+- JSON export for detailed reporting
 
 ## Supported Patterns
 
