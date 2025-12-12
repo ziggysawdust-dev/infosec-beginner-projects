@@ -23,12 +23,11 @@ class UtmpEntry:
     """Represents a single utmp/wtmp entry."""
     
     # utmp struct format (Linux 384-byte entry)
-    # Layout: ut_type(short/2), ut_pid(int/4), ut_line(32), ut_id(4),
-    #         ut_user(32), ut_host(256), ut_exit(int/4), ut_session(int/4),
-    #         ut_time(int/4), ut_addr(int/4), padding(38)
-    # Total: 2+4+32+4+32+256+4+4+4+4+38 = 384 bytes
+    # Offsets: type(0-2), pid(2-6), line(6-38), id(38-42), user(42-74), 
+    #          host(74-330), exit(330-334), session(334-338), padding(338-340),
+    #          timestamp(340-344), addr(344-348), reserved(348-384)
     
-    UTMP_FORMAT = '=hI32s4s32s256sIIII38s'
+    UTMP_FORMAT = '=hI32s4s32s256sII2sII36s'
     UTMP_SIZE = struct.calcsize(UTMP_FORMAT)
     
     # utmp type constants
@@ -72,9 +71,10 @@ class UtmpEntry:
         self.host = data[5].rstrip(b'\x00').decode('utf-8', errors='replace')
         self.exit_code = data[6]
         self.session = data[7]
-        self.timestamp_raw = data[8]
-        addr_int = data[9]
-        # data[10] is padding, ignored
+        # data[8] is 2-byte padding
+        self.timestamp_raw = data[9]
+        addr_int = data[10]
+        # data[11] is reserved padding, ignored
         
         # Timestamp (32-bit Unix epoch)
         self.timestamp = datetime.fromtimestamp(self.timestamp_raw) if self.timestamp_raw else None
@@ -84,9 +84,10 @@ class UtmpEntry:
     
     @staticmethod
     def _int_to_ip(ip_int: int) -> str:
-        """Convert uint32 to dotted IP notation."""
+        """Convert uint32 to dotted IP notation (little-endian)."""
         if ip_int == 0:
             return '0.0.0.0'
+        # Extract bytes in order they appear (little-endian storage)
         return '.'.join(str((ip_int >> (i*8)) & 0xFF) for i in range(4))
     
     @staticmethod
