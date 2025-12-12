@@ -237,7 +237,7 @@ class ForensicsViewer:
             pass
         
         # Column headers
-        col_header = "  TIMESTAMP         | SRC    | EVENT TYPE        | USER        | IP"
+        col_header = "  TIMESTAMP         | SRC    | EVENT TYPE       | USER             | IP"
         try:
             self.stdscr.attron(curses.A_BOLD)
             self.stdscr.addstr(1, 0, col_header[:width-1])
@@ -261,11 +261,11 @@ class ForensicsViewer:
             # Format event line
             ts = event.timestamp.strftime('%Y-%m-%d %H:%M:%S')
             src = event.source.replace('\x00', '')[:6]
-            evt = event.event_type.replace('\x00', '')[:17]
-            user = event.user.replace('\x00', '')[:12]
-            ip = event.ip.replace('\x00', '')[:25]
+            evt = event.event_type.replace('\x00', '')[:16]
+            user = event.user.replace('\x00', '')[:16]
+            ip = event.ip.replace('\x00', '')[:15]
             
-            line = f"  {ts} | {src:<6} | {evt:<17} | {user:<12} | {ip}"
+            line = f"  {ts} | {src:<6} | {evt:<16} | {user:<16} | {ip}"
             line = line[:width-1].ljust(width-1)
             
             # Apply colors
