@@ -221,17 +221,29 @@ class ForensicsViewer:
         self.stdscr.clear()
         height, width = self.stdscr.getmaxyx()
         
+        # Minimum width check
+        if width < 60 or height < 10:
+            self.stdscr.addstr(0, 0, "Terminal too small (need 60x10 minimum)")
+            self.stdscr.refresh()
+            return
+        
         # Header
         header = f" Forensics Timeline Viewer | Events: {len(self.filtered_events)} | Search: {self.search_query or '(none)'}"
-        self.stdscr.attron(curses.color_pair(Colors.HEADER) | curses.A_BOLD)
-        self.stdscr.addstr(0, 0, header[:width].ljust(width))
-        self.stdscr.attroff(curses.color_pair(Colors.HEADER) | curses.A_BOLD)
+        try:
+            self.stdscr.attron(curses.color_pair(Colors.HEADER) | curses.A_BOLD)
+            self.stdscr.addstr(0, 0, header[:width-1].ljust(width-1))
+            self.stdscr.attroff(curses.color_pair(Colors.HEADER) | curses.A_BOLD)
+        except:
+            pass
         
         # Column headers
-        col_header = "  TIMESTAMP         │ SRC    │ EVENT TYPE        │ USER        │ IP"
-        self.stdscr.attron(curses.A_BOLD)
-        self.stdscr.addstr(1, 0, col_header[:width])
-        self.stdscr.attroff(curses.A_BOLD)
+        col_header = "  TIMESTAMP         | SRC    | EVENT TYPE        | USER        | IP"
+        try:
+            self.stdscr.attron(curses.A_BOLD)
+            self.stdscr.addstr(1, 0, col_header[:width-1])
+            self.stdscr.attroff(curses.A_BOLD)
+        except:
+            pass
         
         self.stdscr.addstr(2, 0, "─" * min(width, len(col_header)))
         
@@ -253,34 +265,42 @@ class ForensicsViewer:
             user = event.user.replace('\x00', '')[:12]
             ip = event.ip.replace('\x00', '')[:25]
             
-            line = f"  {ts} │ {src:<6} │ {evt:<17} │ {user:<12} │ {ip}"
-            line = line[:width].ljust(width)
+            line = f"  {ts} | {src:<6} | {evt:<17} | {user:<12} | {ip}"
+            line = line[:width-1].ljust(width-1)
             
             # Apply colors
             color_pair = self._get_event_color(event)
             
-            if is_search_result:
-                self.stdscr.attron(curses.color_pair(Colors.SEARCH))
-            else:
-                self.stdscr.attron(curses.color_pair(color_pair))
-            
-            if is_selected:
-                self.stdscr.attron(curses.A_BOLD)
-            
-            self.stdscr.addstr(3 + i, 0, line)
-            
-            if is_selected:
-                self.stdscr.attroff(curses.A_BOLD)
-            
-            if is_search_result:
-                self.stdscr.attroff(curses.color_pair(Colors.SEARCH))
-            else:
-                self.stdscr.attroff(curses.color_pair(color_pair))
+            try:
+                if is_search_result:
+                    self.stdscr.attron(curses.color_pair(Colors.SEARCH))
+                else:
+                    self.stdscr.attron(curses.color_pair(color_pair))
+                
+                if is_selected:
+                    self.stdscr.attron(curses.A_BOLD)
+                
+                self.stdscr.addstr(3 + i, 0, line)
+                
+                if is_selected:
+                    self.stdscr.attroff(curses.A_BOLD)
+                
+                if is_search_result:
+                    self.stdscr.attroff(curses.color_pair(Colors.SEARCH))
+                else:
+                    self.stdscr.attroff(curses.color_pair(color_pair))
+            except:
+                pass  # Silently ignore rendering errors for edge cases
         
-        # Footer
-        footer = " j/k:scroll  ↑↓:select  /:search  n/N:next/prev  d:details  q:quit  ?:help"
+        # Footer (use ASCII only, no unicode)
+        footer = " j/k:scroll  up/dn:select  /:search  n/N:next/prev  d:details  q:quit  ?:help"
         self.stdscr.attron(curses.A_DIM)
-        self.stdscr.addstr(height - 1, 0, footer[:width].ljust(width))
+        # Safely write footer, ensuring we don't exceed width
+        footer_display = (footer[:width-1]).ljust(width-1)
+        try:
+            self.stdscr.addstr(height - 1, 0, footer_display)
+        except:
+            pass  # Silently fail if footer can't be written (edge cases)
         self.stdscr.attroff(curses.A_DIM)
         
         self.stdscr.refresh()
