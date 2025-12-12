@@ -22,12 +22,13 @@ from pathlib import Path
 class UtmpEntry:
     """Represents a single utmp/wtmp entry."""
     
-    # utmp struct format (Linux)
-    # Layout: ut_type(short), ut_pid(int), ut_line(32s), ut_id(4s),
-    #         ut_user(32s), ut_host(256s), ut_exit(short, short),
-    #         ut_session(int), ut_time(int), ut_addr(int), padding
+    # utmp struct format (Linux 384-byte entry)
+    # Layout: ut_type(short/2), ut_pid(int/4), ut_line(32), ut_id(4),
+    #         ut_user(32), ut_host(256), ut_exit(int/4), ut_session(int/4),
+    #         ut_time(int/4), ut_addr(int/4), padding(38)
+    # Total: 2+4+32+4+32+256+4+4+4+4+38 = 384 bytes
     
-    UTMP_FORMAT = '=hi32s4s32s256shhi4s20s'
+    UTMP_FORMAT = '=hI32s4s32s256sIIII38s'
     UTMP_SIZE = struct.calcsize(UTMP_FORMAT)
     
     # utmp type constants
@@ -70,16 +71,23 @@ class UtmpEntry:
         self.user = data[4].rstrip(b'\x00').decode('utf-8', errors='replace')
         self.host = data[5].rstrip(b'\x00').decode('utf-8', errors='replace')
         self.exit_code = data[6]
-        self.exit_signal = data[7]
-        self.session = data[8]
+        self.session = data[7]
+        self.timestamp_raw = data[8]
+        addr_int = data[9]
+        # data[10] is padding, ignored
         
         # Timestamp (32-bit Unix epoch)
-        timestamp = struct.unpack('=I', data[9][:4])[0]
-        self.timestamp = datetime.fromtimestamp(timestamp) if timestamp else None
+        self.timestamp = datetime.fromtimestamp(self.timestamp_raw) if self.timestamp_raw else None
         
-        # IPv4 address (stored as bytes, but can be uint32)
-        addr_bytes = data[10][:4]
-        self.ipaddr = self._bytes_to_ip(addr_bytes)
+        # IPv4 address (convert from uint32 to dotted notation)
+        self.ipaddr = self._int_to_ip(addr_int)
+    
+    @staticmethod
+    def _int_to_ip(ip_int: int) -> str:
+        """Convert uint32 to dotted IP notation."""
+        if ip_int == 0:
+            return '0.0.0.0'
+        return '.'.join(str((ip_int >> (i*8)) & 0xFF) for i in range(4))
     
     @staticmethod
     def _bytes_to_ip(addr_bytes: bytes) -> str:
