@@ -248,10 +248,10 @@ class ForensicsViewer:
             
             # Format event line
             ts = event.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-            src = event.source[:6]
-            evt = event.event_type[:17]
-            user = event.user[:12]
-            ip = event.ip[:25]
+            src = event.source.replace('\x00', '')[:6]
+            evt = event.event_type.replace('\x00', '')[:17]
+            user = event.user.replace('\x00', '')[:12]
+            ip = event.ip.replace('\x00', '')[:25]
             
             line = f"  {ts} │ {src:<6} │ {evt:<17} │ {user:<12} │ {ip}"
             line = line[:width].ljust(width)
@@ -303,18 +303,18 @@ class ForensicsViewer:
         
         self.stdscr.addstr(1, 0, "─" * width)
         
-        # Event details
+        # Event details (strip null bytes from binary data)
         details = [
             f"Timestamp:   {event.timestamp.isoformat()}",
-            f"Source:      {event.source}",
-            f"Event Type:  {event.event_type}",
-            f"User:        {event.user}",
-            f"IP Address:  {event.ip}",
-            f"Hostname:    {event.hostname}",
+            f"Source:      {event.source.replace(chr(0), '')}",
+            f"Event Type:  {event.event_type.replace(chr(0), '')}",
+            f"User:        {event.user.replace(chr(0), '')}",
+            f"IP Address:  {event.ip.replace(chr(0), '')}",
+            f"Hostname:    {event.hostname.replace(chr(0), '')}",
             f"PID:         {event.pid}",
-            f"Details:     {event.details}",
+            f"Details:     {event.details.replace(chr(0), '')}",
             "",
-            f"Raw Event:   {event.raw}",
+            f"Raw Event:   {event.raw.replace(chr(0), '')}",
         ]
         
         for i, line in enumerate(details):
